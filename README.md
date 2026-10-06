@@ -73,12 +73,13 @@
             color: #dd6b20;
         }
 
-        /* 表單區域 - 輸入格組合 */
-        .input-grid {
+        /* 雙欄卡片佈局 */
+        .grid-2col {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 1fr 1fr;
             gap: 8px;
         }
+
         .input-group {
             display: flex;
             flex-direction: column;
@@ -88,7 +89,7 @@
             font-size: 12px;
             font-weight: 700;
             margin-bottom: 3px;
-            color: #2d3748;
+            color: #d69e2e;
         }
         .input-group input {
             width: 100%;
@@ -109,11 +110,6 @@
         }
 
         /* 結果顯示卡片區塊 */
-        .results-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
         .res-card {
             border-radius: 8px;
             padding: 6px 8px;
@@ -189,32 +185,37 @@
 
     <div id="alertBox" class="alert-box"></div>
 
-    <div class="input-grid">
+    <!-- 第一排：體重 (輸入) + 預打藥量 (計算結果) -->
+    <div class="grid-2col">
         <div class="input-group">
             <label style="color:#2b6cb0;">體重 (kg)</label>
             <input type="number" id="weight" step="any" placeholder="0" oninput="calculate()">
         </div>
-        <div class="input-group">
-            <label style="color:#d69e2e;">打藥前</label>
-            <input type="number" id="beforeDose" step="any" placeholder="0" oninput="calculate()">
-        </div>
-        <div class="input-group">
-            <label style="color:#d69e2e;">打藥後</label>
-            <input type="number" id="afterDose" step="any" placeholder="0" oninput="calculate()">
-        </div>
-    </div>
-
-    <div class="results-grid">
         <div class="res-card card-orange">
             <div class="title">預打藥量 (體重×0.14)</div>
             <div class="value" id="predose">-</div>
         </div>
-        <div class="res-card card-green">
-            <div class="title">實打藥量 (前 - 後)</div>
-            <div class="value" id="actualDose">-</div>
+    </div>
+
+    <!-- 第二排：打藥前 (輸入) + 打藥後 (輸入) -->
+    <div class="grid-2col">
+        <div class="input-group">
+            <label>打藥前</label>
+            <input type="number" id="beforeDose" step="any" placeholder="0" oninput="calculate()">
+        </div>
+        <div class="input-group">
+            <label>打藥後</label>
+            <input type="number" id="afterDose" step="any" placeholder="0" oninput="calculate()">
         </div>
     </div>
 
+    <!-- 第三排：實打藥量 (計算結果) -->
+    <div class="res-card card-green">
+        <div class="title">實打藥量 (打藥前 - 打藥後)</div>
+        <div class="value" id="actualDose">-</div>
+    </div>
+
+    <!-- 第四排：安全劑量範圍 -->
     <div class="res-card card-range">
         <div class="title">安全劑量建議範圍</div>
         <div class="range-container">
@@ -229,6 +230,7 @@
         </div>
     </div>
 
+    <!-- 第五排：按鈕 -->
     <div class="btn-group">
         <button class="btn-excel" onclick="exportToExcel()">📥 下載 Excel 總表</button>
         <button class="btn-reset" onclick="clearAll()">🔄 清除換下一位</button>
