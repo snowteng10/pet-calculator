@@ -1,304 +1,381 @@
-[index (2).html](https://github.com/user-attachments/files/33131338/index.2.html)[Uploa<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PET 打藥劑量計算器 (手機直式版)</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- SheetJS (xlsx) CDN for Excel Export -->
+    <title>PET 打藥劑量計算器</title>
+    <!-- 引入 SheetJS 庫以支援匯出 Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        /* custom scrollbar and mobile-friendly tap highlights */
         * {
-            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: #f1f5f9;
+            background-color: #f0f4f8;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px;
         }
+        .calculator-card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 480px;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #edf2f7;
+            padding-bottom: 6px;
+        }
+        .header h2 {
+            font-size: 17px;
+            color: #1a365d;
+            font-weight: 700;
+        }
+        .counter-badge {
+            background-color: #e2e8f0;
+            color: #4a5568;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        
+        /* 警報提示區塊 */
+        .alert-box {
+            padding: 6px 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+            display: none;
+        }
+        .alert-too-much {
+            background-color: #fff5f5;
+            border: 1.5px solid #fc8181;
+            color: #c53030;
+        }
+        .alert-too-less {
+            background-color: #fffaf0;
+            border: 1.5px solid #f6ad55;
+            color: #dd6b20;
+        }
+
+        /* 表單區域 - 輸入格組合 */
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .input-group label {
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 3px;
+            color: #2d3748;
+        }
+        .input-group input {
+            width: 100%;
+            height: 38px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            border: 1.5px solid #cbd5e0;
+            border-radius: 6px;
+            background-color: #f8fafc;
+            color: #1a202c;
+            outline: none;
+        }
+        .input-group input:focus {
+            border-color: #3182ce;
+            background-color: #ffffff;
+            box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.2);
+        }
+
+        /* 結果顯示卡片區塊 */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .res-card {
+            border-radius: 8px;
+            padding: 6px 8px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .res-card .title {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        .res-card .value {
+            font-size: 18px;
+            font-weight: 800;
+        }
+        
+        .card-orange { background-color: #feebc8; color: #7b341e; }
+        .card-green  { background-color: #c6f6d5; color: #22543d; }
+        .card-range  { background-color: #fff5f5; color: #9b2c2c; border: 1px dashed #feb2b2; }
+
+        .range-container {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 2px;
+        }
+        .range-sub {
+            display: flex;
+            flex-direction: column;
+        }
+        .range-sub span.sub-title {
+            font-size: 10px;
+            color: #742a2a;
+        }
+        .range-sub span.sub-val {
+            font-size: 15px;
+            font-weight: 700;
+            color: #2b6cb0;
+        }
+
+        /* 按鈕區域 */
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 2px;
+        }
+        button {
+            height: 38px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            transition: active 0.1s;
+        }
+        button:active {
+            opacity: 0.85;
+        }
+        .btn-excel { background-color: #38a169; }
+        .btn-reset { background-color: #718096; }
     </style>
 </head>
-<body class="min-h-screen pb-12 pt-4 px-3 sm:px-6 flex flex-col justify-start items-center">
+<body>
 
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-200">
-        
-        <!-- Header Section -->
-        <div class="bg-slate-800 text-white py-5 px-4 text-center relative shadow-sm">
-            <h1 class="text-2xl font-bold tracking-wide">PET 打藥劑量計算器</h1>
-            <p class="text-xs text-slate-300 mt-1">行動裝置 / 直式快速計算版</p>
-            <div id="recordCounter" class="mt-3 inline-block bg-slate-700/80 text-amber-300 text-xs font-semibold px-3 py-1 rounded-full border border-slate-600">
-                目前累積記錄筆數：0 筆
-            </div>
+<div class="calculator-card">
+    <div class="header">
+        <h2>PET 打藥劑量計算器</h2>
+        <div class="counter-badge" id="recordCounter">紀錄：0 筆</div>
+    </div>
+
+    <div id="alertBox" class="alert-box"></div>
+
+    <div class="input-grid">
+        <div class="input-group">
+            <label style="color:#2b6cb0;">體重 (kg)</label>
+            <input type="number" id="weight" step="any" placeholder="0" oninput="calculate()">
         </div>
-
-        <!-- Alert Notification Box -->
-        <div id="alertBox" class="hidden m-4 p-4 rounded-xl text-center text-sm font-bold border-2 transition-all duration-300 shadow-sm animate-pulse"></div>
-
-        <!-- Main Form Cards Container -->
-        <div class="p-4 space-y-4">
-
-            <!-- 1. 體重 (kg) 卡片 -->
-            <div class="bg-blue-50/80 border-2 border-blue-200 rounded-xl p-4 shadow-sm">
-                <div class="flex justify-between items-center mb-2">
-                    <label for="weight" class="text-blue-900 font-bold text-base flex items-center gap-1.5">
-                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-blue-500"></span>
-                        體重 (kg)
-                    </label>
-                </div>
-                <input type="number" step="any" id="weight" placeholder="請輸入體重" oninput="calculate()"
-                    class="w-full h-14 text-center text-2xl font-bold bg-white text-slate-800 rounded-lg border-2 border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all shadow-inner">
-            </div>
-
-            <!-- 2. 預打藥量 卡片 (自動計算) -->
-            <div class="bg-amber-50/80 border-2 border-amber-200 rounded-xl p-4 shadow-sm">
-                <div class="flex justify-between items-baseline mb-1">
-                    <span class="text-amber-900 font-bold text-base flex items-center gap-1.5">
-                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                        預打藥量
-                    </span>
-                    <span class="text-xs font-medium text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded">體重 × 0.14</span>
-                </div>
-                <div class="h-14 bg-white rounded-lg border-2 border-amber-200 flex items-center justify-center shadow-inner">
-                    <span id="predose" class="text-2xl font-extrabold text-amber-900">-</span>
-                </div>
-            </div>
-
-            <!-- 3. 打藥前與打藥後 卡片 (並排或直式) -->
-            <div class="bg-yellow-50/80 border-2 border-yellow-200 rounded-xl p-4 shadow-sm space-y-3">
-                <div class="text-yellow-900 font-bold text-base flex items-center gap-1.5 border-b border-yellow-200/60 pb-2">
-                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
-                    打藥數值紀錄
-                </div>
-                
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label for="beforeDose" class="block text-xs font-semibold text-yellow-800 mb-1">打藥前</label>
-                        <input type="number" step="any" id="beforeDose" placeholder="打藥前" oninput="calculate()"
-                            class="w-full h-12 text-center text-xl font-bold bg-white text-slate-800 rounded-lg border-2 border-yellow-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 outline-none transition-all shadow-inner">
-                    </div>
-                    <div>
-                        <label for="afterDose" class="block text-xs font-semibold text-yellow-800 mb-1">打藥後</label>
-                        <input type="number" step="any" id="afterDose" placeholder="打藥後" oninput="calculate()"
-                            class="w-full h-12 text-center text-xl font-bold bg-white text-slate-800 rounded-lg border-2 border-yellow-300 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 outline-none transition-all shadow-inner">
-                    </div>
-                </div>
-            </div>
-
-            <!-- 4. 實打藥量 卡片 (自動計算) -->
-            <div class="bg-emerald-50/80 border-2 border-emerald-300 rounded-xl p-4 shadow-sm">
-                <div class="flex justify-between items-baseline mb-1">
-                    <span class="text-emerald-900 font-bold text-base flex items-center gap-1.5">
-                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                        實打藥量
-                    </span>
-                    <span class="text-xs font-medium text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">打藥前 − 打藥後</span>
-                </div>
-                <div class="h-14 bg-white rounded-lg border-2 border-emerald-300 flex items-center justify-center shadow-inner">
-                    <span id="actualDose" class="text-3xl font-black text-emerald-700">-</span>
-                </div>
-            </div>
-
-            <!-- 5. 參考範圍 (-10% / +20%) 卡片 -->
-            <div class="bg-red-50/60 border-2 border-red-200 rounded-xl p-4 shadow-sm">
-                <div class="text-red-900 font-bold text-base mb-2 flex items-center gap-1.5">
-                    <span class="inline-block w-2.5 h-2.5 rounded-full bg-red-400"></span>
-                    建議實打範圍 (基準 -10% ~ +20%)
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-white p-3 rounded-lg border border-red-200 text-center shadow-inner">
-                        <div class="text-xs text-red-600 font-medium mb-1">-10% 下限</div>
-                        <div id="minus10" class="text-xl font-bold text-slate-700">-</div>
-                    </div>
-                    <div class="bg-white p-3 rounded-lg border border-red-200 text-center shadow-inner">
-                        <div class="text-xs text-red-600 font-medium mb-1">+20% 上限</div>
-                        <div id="plus20" class="text-xl font-bold text-slate-700">-</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 操作按鈕區塊 -->
-            <div class="pt-2 space-y-3">
-                <button onclick="exportToExcel()" 
-                    class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-base rounded-xl shadow-lg transition duration-150 flex items-center justify-center gap-2 touch-manipulation">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    📥 下載完整多筆 Excel 總表
-                </button>
-                <button onclick="clearAll()" 
-                    class="w-full py-3.5 bg-slate-500 hover:bg-slate-600 active:bg-slate-700 text-white font-bold text-base rounded-xl shadow transition duration-150 flex items-center justify-center gap-2 touch-manipulation">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    清除重置（換下一位）
-                </button>
-            </div>
-
+        <div class="input-group">
+            <label style="color:#d69e2e;">打藥前</label>
+            <input type="number" id="beforeDose" step="any" placeholder="0" oninput="calculate()">
+        </div>
+        <div class="input-group">
+            <label style="color:#d69e2e;">打藥後</label>
+            <input type="number" id="afterDose" step="any" placeholder="0" oninput="calculate()">
         </div>
     </div>
 
-    <!-- JavaScript 邏輯部分 -->
-    <script>
-        // 儲存累積紀錄的陣列與當前紀錄指標
-        let multiRecords = [];
-        let currentRecordId = null;
+    <div class="results-grid">
+        <div class="res-card card-orange">
+            <div class="title">預打藥量 (體重×0.14)</div>
+            <div class="value" id="predose">-</div>
+        </div>
+        <div class="res-card card-green">
+            <div class="title">實打藥量 (前 - 後)</div>
+            <div class="value" id="actualDose">-</div>
+        </div>
+    </div>
 
-        // 警報聲音提示 (Web Audio API)
-        function playBeep(isTooMuch) {
-            try {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                if (!AudioContext) return;
-                const audioCtx = new AudioContext();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
-                
-                oscillator.type = 'sine';
-                if (isTooMuch) {
-                    // 太高：高頻警告音
-                    oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
-                    oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime + 0.15);
-                } else {
-                    // 太低：低頻提醒音
-                    oscillator.frequency.setValueAtTime(500, audioCtx.currentTime);
-                    oscillator.frequency.setValueAtTime(400, audioCtx.currentTime + 0.15);
-                }
-                
-                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                
-                oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.4);
-            } catch (e) {
-                console.log("音效播放失敗或瀏覽器受限:", e);
-            }
-        }
+    <div class="res-card card-range">
+        <div class="title">安全劑量建議範圍</div>
+        <div class="range-container">
+            <div class="range-sub">
+                <span class="sub-title">-10% 下限</span>
+                <span class="sub-val" id="minus10">-</span>
+            </div>
+            <div class="range-sub">
+                <span class="sub-title">+20% 上限</span>
+                <span class="sub-val" id="plus20">-</span>
+            </div>
+        </div>
+    </div>
 
-        // 核心劑量計算 logic
-        function calculate() {
-            const weight = parseFloat(document.getElementById('weight').value);
-            const beforeDose = parseFloat(document.getElementById('beforeDose').value);
-            const afterDose = parseFloat(document.getElementById('afterDose').value);
+    <div class="btn-group">
+        <button class="btn-excel" onclick="exportToExcel()">📥 下載 Excel 總表</button>
+        <button class="btn-reset" onclick="clearAll()">🔄 清除換下一位</button>
+    </div>
+</div>
 
-            const predoseElem = document.getElementById('predose');
-            const actualDoseElem = document.getElementById('actualDose');
-            const minus10Elem = document.getElementById('minus10');
-            const plus20Elem = document.getElementById('plus20');
-            const alertBox = document.getElementById('alertBox');
+<script>
+    let multiRecords = [];
+    let currentRecordId = null;
 
-            let predose = NaN;
-            let actualDose = NaN;
-
-            // 計算預打藥量 (體重 × 0.14)
-            if (!isNaN(weight) && weight > 0) {
-                predose = weight * 0.14;
-                predoseElem.innerText = predose.toFixed(2);
-            } else {
-                predoseElem.innerText = '-';
-            }
-
-            // 計算實打藥量 (打藥前 − 打藥後)
-            if (!isNaN(beforeDose) && !isNaN(afterDose)) {
-                actualDose = beforeDose - afterDose;
-                actualDoseElem.innerText = actualDose.toFixed(2);
-            } else {
-                actualDoseElem.innerText = '-';
-            }
-
-            // 計算上下限範圍 (-10% / +20%)
-            if (!isNaN(predose)) {
-                const m10 = predose * 0.9;
-                const p20 = predose * 1.2;
-                
-                minus10Elem.innerText = m10.toFixed(2);
-                plus20Elem.innerText = p20.toFixed(2);
-
-                // 自動背景更新/記錄
-                if (!isNaN(weight) && !isNaN(beforeDose) && !isNaN(afterDose) && !isNaN(actualDose)) {
-                    const now = new Date().toLocaleString('zh-TW', { hour12: false });
-                    const recordData = {
-                        "記錄時間": now,
-                        "體重 (kg)": weight,
-                        "預打藥量": parseFloat(predose.toFixed(2)),
-                        "打藥前": beforeDose,
-                        "打藥後": afterDose,
-                        "實打藥量": parseFloat(actualDose.toFixed(2)),
-                        "-10% 範圍": parseFloat(m10.toFixed(2)),
-                        "+20% 範圍": parseFloat(p20.toFixed(2))
-                    };
-
-                    if (currentRecordId === null) {
-                        multiRecords.push(recordData);
-                        currentRecordId = multiRecords.length - 1;
-                    } else {
-                        multiRecords[currentRecordId] = recordData;
-                    }
-
-                    document.getElementById('recordCounter').innerText = `目前累積記錄筆數：${multiRecords.length} 筆`;
-                }
-
-                // 警報條件判斷
-                if (!isNaN(actualDose)) {
-                    if (actualDose > p20) {
-                        alertBox.className = 'm-4 p-4 rounded-xl text-center text-sm font-bold border-2 transition-all duration-300 shadow-sm bg-red-100 border-red-400 text-red-700 block';
-                        alertBox.innerText = '⚠️ 警告：實打藥量【太多】，已超出 +20% 上限範圍！';
-                        playBeep(true);
-                    } else if (actualDose < m10) {
-                        alertBox.className = 'm-4 p-4 rounded-xl text-center text-sm font-bold border-2 transition-all duration-300 shadow-sm bg-amber-100 border-amber-400 text-amber-800 block';
-                        alertBox.innerText = '⚠️ 注意：實打藥量【太少】，低於 -10% 下限範圍！';
-                        playBeep(false);
-                    } else {
-                        alertBox.className = 'hidden';
-                    }
-                } else {
-                    alertBox.className = 'hidden';
-                }
-            } else {
-                minus10Elem.innerText = '-';
-                plus20Elem.innerText = '-';
-                alertBox.className = 'hidden';
-            }
-        }
-
-        // 清除當前輸入（換下一位患者）
-        function clearAll() {
-            document.getElementById('weight').value = '';
-            document.getElementById('beforeDose').value = '';
-            document.getElementById('afterDose').value = '';
-
-            document.getElementById('predose').innerText = '-';
-            document.getElementById('actualDose').innerText = '-';
-            document.getElementById('minus10').innerText = '-';
-            document.getElementById('plus20').innerText = '-';
-
-            document.getElementById('alertBox').className = 'hidden';
-
-            // 重置當前筆數 id，下次輸入將新增為新紀錄
-            currentRecordId = null;
-        }
-
-        // 匯出 Excel 檔案
-        function exportToExcel() {
-            if (multiRecords.length === 0) {
-                alert('目前尚無累積的計算紀錄可供下載！請先輸入體重與打藥數值。');
-                return;
-            }
-
-            // 使用 SheetJS 產生工作表與活頁簿
-            const worksheet = XLSX.utils.json_to_sheet(multiRecords);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "PET打藥總表");
-
-            // 檔名加上目前日期時間
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hour = String(now.getHours()).padStart(2, '0');
-            const minute = String(now.getMinutes()).padStart(2, '0');
+    function playBeep(isTooMuch) {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
             
-            const fileName = `PET打藥劑量總表_${year}${month}${day}_${hour}${minute}.xlsx`;
-
-            // 觸發下載
-            XLSX.writeFile(workbook, fileName);
+            oscillator.type = 'sine';
+            if (isTooMuch) {
+                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime + 0.15);
+            } else {
+                oscillator.frequency.setValueAtTime(500, audioCtx.currentTime);
+                oscillator.frequency.setValueAtTime(400, audioCtx.currentTime + 0.15);
+            }
+            
+            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.4);
+        } catch (e) {
+            console.log("音效無法播放", e);
         }
-    </script>
+    }
+
+    function calculate() {
+        const weight = parseFloat(document.getElementById('weight').value);
+        const beforeDose = parseFloat(document.getElementById('beforeDose').value);
+        const afterDose = parseFloat(document.getElementById('afterDose').value);
+
+        const predoseElem = document.getElementById('predose');
+        const actualDoseElem = document.getElementById('actualDose');
+        const minus10Elem = document.getElementById('minus10');
+        const plus20Elem = document.getElementById('plus20');
+        const alertBox = document.getElementById('alertBox');
+
+        let predose = NaN;
+        let actualDose = NaN;
+
+        if (!isNaN(weight)) {
+            predose = weight * 0.14;
+            predoseElem.innerText = predose.toFixed(2);
+        } else {
+            predoseElem.innerText = '-';
+        }
+
+        if (!isNaN(beforeDose) && !isNaN(afterDose)) {
+            actualDose = beforeDose - afterDose;
+            actualDoseElem.innerText = actualDose.toFixed(2);
+        } else {
+            actualDoseElem.innerText = '-';
+        }
+
+        if (!isNaN(predose)) {
+            const m10 = predose * 0.9;
+            const p20 = predose * 1.2;
+            
+            minus10Elem.innerText = m10.toFixed(2);
+            plus20Elem.innerText = p20.toFixed(2);
+
+            if (!isNaN(weight) && !isNaN(beforeDose) && !isNaN(afterDose) && !isNaN(actualDose)) {
+                const now = new Date().toLocaleString('zh-TW');
+                const recordData = {
+                    "記錄時間": now,
+                    "體重 (kg)": weight,
+                    "預打藥量": predose.toFixed(2),
+                    "打藥前": beforeDose,
+                    "打藥後": afterDose,
+                    "實打藥量": actualDose.toFixed(2),
+                    "-10% 範圍": m10.toFixed(2),
+                    "+20% 範圍": p20.toFixed(2)
+                };
+
+                if (currentRecordId === null) {
+                    multiRecords.push(recordData);
+                    currentRecordId = multiRecords.length - 1;
+                } else {
+                    multiRecords[currentRecordId] = recordData;
+                }
+
+                document.getElementById('recordCounter').innerText = `紀錄：${multiRecords.length} 筆`;
+            }
+
+            if (!isNaN(actualDose)) {
+                if (actualDose > p20) {
+                    alertBox.className = 'alert-box alert-too-much';
+                    alertBox.innerText = '⚠️ 警告：實打藥量【太多】，超出 +20% 上限！';
+                    alertBox.style.display = 'block';
+                    playBeep(true);
+                } else if (actualDose < m10) {
+                    alertBox.className = 'alert-box alert-too-less';
+                    alertBox.innerText = '⚠️ 注意：實打藥量【太少】，低於 -10% 下限！';
+                    alertBox.style.display = 'block';
+                    playBeep(false);
+                } else {
+                    alertBox.style.display = 'none';
+                }
+            } else {
+                alertBox.style.display = 'none';
+            }
+        } else {
+            minus10Elem.innerText = '-';
+            plus20Elem.innerText = '-';
+            alertBox.style.display = 'none';
+        }
+    }
+
+    function clearAll() {
+        document.getElementById('weight').value = '';
+        document.getElementById('beforeDose').value = '';
+        document.getElementById('afterDose').value = '';
+
+        document.getElementById('predose').innerText = '-';
+        document.getElementById('actualDose').innerText = '-';
+        document.getElementById('minus10').innerText = '-';
+        document.getElementById('plus20').innerText = '-';
+
+        document.getElementById('alertBox').style.display = 'none';
+        currentRecordId = null;
+    }
+
+    function exportToExcel() {
+        if (multiRecords.length === 0) {
+            alert('目前尚無累積的計算紀錄可供下載！');
+            return;
+        }
+
+        const worksheet = XLSX.utils.json_to_sheet(multiRecords);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "PET打藥總表");
+
+        const now = new Date();
+        const timestamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+        XLSX.writeFile(workbook, `PET打藥紀錄_${timestamp}.xlsx`);
+    }
+</script>
+
 </body>
-</html>ding index (2).html…]()
+</html>
