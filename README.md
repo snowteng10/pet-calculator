@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PET 打藥劑量計算器</title>
-    <!-- 引入 SheetJS 庫以支援匯出 Excel -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -34,7 +32,7 @@
         }
         .header {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
             border-bottom: 2px solid #edf2f7;
             padding-bottom: 6px;
@@ -43,14 +41,6 @@
             font-size: 17px;
             color: #1a365d;
             font-weight: 700;
-        }
-        .counter-badge {
-            background-color: #e2e8f0;
-            color: #4a5568;
-            font-size: 11px;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-weight: 600;
         }
         
         /* 警報提示區塊 */
@@ -153,12 +143,12 @@
 
         /* 按鈕區域 */
         .btn-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            display: flex;
+            justify-content: center;
             margin-top: 2px;
         }
         button {
+            width: 100%;
             height: 38px;
             border: none;
             border-radius: 6px;
@@ -171,16 +161,14 @@
         button:active {
             opacity: 0.85;
         }
-        .btn-excel { background-color: #38a169; }
         .btn-reset { background-color: #718096; }
     </style>
 </head>
-<body>
+<body onclick="initAudio()">
 
 <div class="calculator-card">
     <div class="header">
         <h2>PET 打藥劑量計算器</h2>
-        <div class="counter-badge" id="recordCounter">紀錄：0 筆</div>
     </div>
 
     <div id="alertBox" class="alert-box"></div>
@@ -232,38 +220,61 @@
 
     <!-- 第五排：按鈕 -->
     <div class="btn-group">
-        <button class="btn-excel" onclick="exportToExcel()">📥 下載 Excel 總表</button>
         <button class="btn-reset" onclick="clearAll()">🔄 清除換下一位</button>
     </div>
 </div>
 
 <script>
-    let multiRecords = [];
-    let currentRecordId = null;
+    let audioCtx = null;
+    let lastAlertState = 'NORMAL';
 
+    // 解鎖手機瀏覽器的 AudioContext 聲音權限
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    // 發出警示音蜂鳴聲
     function playBeep(isTooMuch) {
+        initAudio();
+        if (!audioCtx) return;
+
         try {
-            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'sine';
             
-            oscillator.type = 'sine';
             if (isTooMuch) {
-                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
-                oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime + 0.15);
+                // 超出上限：高音雙響 (嗶！嗶！)
+                osc.frequency.setValueAtTime(880, now);
+                osc.frequency.setValueAtTime(1046, now + 0.15);
+                gain.gain.setValueAtTime(0.4, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.35);
             } else {
-                oscillator.frequency.setValueAtTime(500, audioCtx.currentTime);
-                oscillator.frequency.setValueAtTime(400, audioCtx.currentTime + 0.15);
+                // 低於下限：低音警告 (嗶—)
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.setValueAtTime(349, now + 0.15);
+                gain.gain.setValueAtTime(0.4, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now);
+                osc.stop(now + 0.35);
             }
-            
-            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-            
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.4);
         } catch (e) {
-            console.log("音效無法播放", e);
+            console.log("音效播放失敗：", e);
         }
     }
 
@@ -302,50 +313,36 @@
             minus10Elem.innerText = m10.toFixed(2);
             plus20Elem.innerText = p20.toFixed(2);
 
-            if (!isNaN(weight) && !isNaN(beforeDose) && !isNaN(afterDose) && !isNaN(actualDose)) {
-                const now = new Date().toLocaleString('zh-TW');
-                const recordData = {
-                    "記錄時間": now,
-                    "體重 (kg)": weight,
-                    "預打藥量": predose.toFixed(2),
-                    "打藥前": beforeDose,
-                    "打藥後": afterDose,
-                    "實打藥量": actualDose.toFixed(2),
-                    "-10% 範圍": m10.toFixed(2),
-                    "+20% 範圍": p20.toFixed(2)
-                };
-
-                if (currentRecordId === null) {
-                    multiRecords.push(recordData);
-                    currentRecordId = multiRecords.length - 1;
-                } else {
-                    multiRecords[currentRecordId] = recordData;
-                }
-
-                document.getElementById('recordCounter').innerText = `紀錄：${multiRecords.length} 筆`;
-            }
-
             if (!isNaN(actualDose)) {
                 if (actualDose > p20) {
                     alertBox.className = 'alert-box alert-too-much';
                     alertBox.innerText = '⚠️ 警告：實打藥量【太多】，超出 +20% 上限！';
                     alertBox.style.display = 'block';
-                    playBeep(true);
+                    if (lastAlertState !== 'TOO_MUCH') {
+                        playBeep(true);
+                        lastAlertState = 'TOO_MUCH';
+                    }
                 } else if (actualDose < m10) {
                     alertBox.className = 'alert-box alert-too-less';
                     alertBox.innerText = '⚠️ 注意：實打藥量【太少】，低於 -10% 下限！';
                     alertBox.style.display = 'block';
-                    playBeep(false);
+                    if (lastAlertState !== 'TOO_LESS') {
+                        playBeep(false);
+                        lastAlertState = 'TOO_LESS';
+                    }
                 } else {
                     alertBox.style.display = 'none';
+                    lastAlertState = 'NORMAL';
                 }
             } else {
                 alertBox.style.display = 'none';
+                lastAlertState = 'NORMAL';
             }
         } else {
             minus10Elem.innerText = '-';
             plus20Elem.innerText = '-';
             alertBox.style.display = 'none';
+            lastAlertState = 'NORMAL';
         }
     }
 
@@ -360,22 +357,7 @@
         document.getElementById('plus20').innerText = '-';
 
         document.getElementById('alertBox').style.display = 'none';
-        currentRecordId = null;
-    }
-
-    function exportToExcel() {
-        if (multiRecords.length === 0) {
-            alert('目前尚無累積的計算紀錄可供下載！');
-            return;
-        }
-
-        const worksheet = XLSX.utils.json_to_sheet(multiRecords);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "PET打藥總表");
-
-        const now = new Date();
-        const timestamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
-        XLSX.writeFile(workbook, `PET打藥紀錄_${timestamp}.xlsx`);
+        lastAlertState = 'NORMAL';
     }
 </script>
 
