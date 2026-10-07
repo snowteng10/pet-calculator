@@ -19,205 +19,165 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 8px;
+            padding: 12px;
         }
-        .calculator-card {
+        .calculator-container {
             background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 24px 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
             width: 100%;
-            max-width: 480px;
-            padding: 12px 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            max-width: 500px;
         }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid #edf2f7;
-            padding-bottom: 6px;
-        }
-        .header h2 {
-            font-size: 17px;
-            color: #1a365d;
-            font-weight: 700;
-        }
-        .counter-badge {
-            background-color: #e2e8f0;
-            color: #4a5568;
-            font-size: 11px;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-weight: 600;
-        }
-        
-        /* 警報提示區塊 */
-        .alert-box {
-            padding: 6px 10px;
-            border-radius: 6px;
+        h2 {
             text-align: center;
-            font-size: 13px;
+            color: #1a365d;
+            margin-bottom: 6px;
+            font-size: 24px;
+        }
+        .record-counter {
+            text-align: center;
+            color: #4a5568;
+            font-size: 15px;
+            margin-bottom: 16px;
             font-weight: bold;
+        }
+        .alert-box {
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 16px;
             display: none;
         }
         .alert-too-much {
             background-color: #fff5f5;
-            border: 1.5px solid #fc8181;
+            border: 2px solid #fc8181;
             color: #c53030;
         }
         .alert-too-less {
             background-color: #fffaf0;
-            border: 1.5px solid #f6ad55;
+            border: 2px solid #f6ad55;
             color: #dd6b20;
         }
 
-        /* 雙欄卡片佈局 */
-        .grid-2col {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .input-group {
+        /* 雙欄卡片直式佈局 */
+        .form-grid {
             display: flex;
             flex-direction: column;
-            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
         }
-        .input-group label {
-            font-size: 12px;
-            font-weight: 700;
-            margin-bottom: 3px;
-            color: #d69e2e;
-        }
-        .input-group input {
-            width: 100%;
-            height: 38px;
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            border: 1.5px solid #cbd5e0;
-            border-radius: 6px;
-            background-color: #f8fafc;
-            color: #1a202c;
-            outline: none;
-        }
-        .input-group input:focus {
-            border-color: #3182ce;
-            background-color: #ffffff;
-            box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.2);
+        .grid-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
         }
 
-        /* 結果顯示卡片區塊 */
-        .res-card {
-            border-radius: 8px;
-            padding: 6px 8px;
+        .card {
+            border: 2px solid #cbd5e0;
+            border-radius: 10px;
+            padding: 10px;
             text-align: center;
             display: flex;
             flex-direction: column;
             justify-content: center;
+            align-items: center;
         }
-        .res-card .title {
-            font-size: 11px;
-            font-weight: 600;
-            margin-bottom: 2px;
+        .card label, .card .card-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            display: block;
         }
-        .res-card .value {
-            font-size: 18px;
-            font-weight: 800;
-        }
-        
-        .card-orange { background-color: #feebc8; color: #7b341e; }
-        .card-green  { background-color: #c6f6d5; color: #22543d; }
-        .card-range  { background-color: #fff5f5; color: #9b2c2c; border: 1px dashed #feb2b2; }
 
-        .range-container {
+        /* 上層顏色設定 */
+        .card-blue { background-color: #bee3f8; color: #1a365d; border-color: #90cdf4; }
+        .card-orange { background-color: #feebc8; color: #7b341e; border-color: #fbd38d; }
+        .card-yellow { background-color: #fefcbf; color: #744210; border-color: #faf089; }
+        .card-green { background-color: #c6f6d5; color: #22543d; border-color: #9ae6b4; }
+        .card-range { background-color: #fed7d7; color: #9b2c2c; border-color: #feb2b2; }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 2px solid #a0aec0;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #2d3748;
+            background-color: #ffffff;
+            outline: none;
+        }
+        input:focus {
+            border-color: #3182ce;
+            box-shadow: 0 0 6px rgba(49, 130, 206, 0.4);
+        }
+
+        .val-text {
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .range-box {
             display: flex;
             justify-content: space-around;
-            margin-top: 2px;
+            width: 100%;
+            margin-top: 4px;
         }
-        .range-sub {
+        .range-item {
             display: flex;
             flex-direction: column;
         }
-        .range-sub span.sub-title {
-            font-size: 10px;
-            color: #742a2a;
+        .range-item span {
+            font-size: 12px;
+            font-weight: normal;
         }
-        .range-sub span.sub-val {
-            font-size: 15px;
-            font-weight: 700;
+        .range-item strong {
+            font-size: 20px;
             color: #2b6cb0;
         }
 
-        /* 按鈕區域 */
-        .btn-group {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-top: 2px;
+        .btn-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
         button {
-            height: 38px;
-            border: none;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 700;
+            background-color: #3182ce;
             color: white;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: active 0.1s;
+            font-weight: bold;
+            transition: background 0.2s;
         }
-        button:active {
-            opacity: 0.85;
-        }
-        .btn-excel { background-color: #38a169; }
-        .btn-reset { background-color: #718096; }
+        button.btn-success { background-color: #38a169; }
+        button.btn-secondary { background-color: #718096; }
+        button:active { opacity: 0.9; }
     </style>
 </head>
 <body onclick="initAudio()">
 
-<div class="calculator-card">
-    <div class="header">
-        <h2>PET 打藥劑量計算器</h2>
-        <div class="counter-badge" id="recordCounter">紀錄：0 筆</div>
-    </div>
-
+<div class="calculator-container">
+    <h2>PET 打藥劑量計算器</h2>
+    <div class="record-counter" id="recordCounter">目前累積記錄筆數：0 筆</div>
+    
     <div id="alertBox" class="alert-box"></div>
 
-    <!-- 第一排：體重 (輸入) + 預打藥量 (計算結果) -->
-    <div class="grid-2col">
-        <div class="input-group">
-            <label style="color:#2b6cb0;">體重 (kg)</label>
-            <input type="number" id="weight" step="any" placeholder="0" oninput="calculate()">
-        </div>
-        <div class="res-card card-orange">
-            <div class="title">預打藥量 (體重×0.14)</div>
-            <div class="value" id="predose">-</div>
-        </div>
-    </div>
-
-    <!-- 第二排：打藥前 (輸入) + 打藥後 (輸入) -->
-    <div class="grid-2col">
-        <div class="input-group">
-            <label>打藥前</label>
-            <input type="number" id="beforeDose" step="any" placeholder="0" oninput="calculate()">
-        </div>
-        <div class="input-group">
-            <label>打藥後</label>
-            <input type="number" id="afterDose" step="any" placeholder="0" oninput="calculate()">
-        </div>
-    </div>
-
-    <!-- 第三排：實打藥量 (計算結果) -->
-    <div class="res-card card-green">
-        <div class="title">實打藥量 (打藥前 - 打藥後)</div>
-        <div class="value" id="actualDose">-</div>
-    </div>
-
-    <!-- 第四排：安全劑量範圍 -->
-    <div class="res-card card-range">
-        <div class="title">安全劑量建議範圍</div>
-        <div class="range-container">
-            <div class="range-sub">
-                <span class="sub-title">-1
+    <div class="form-grid">
+        <!-- 第一排：體重 + 預打藥量 -->
+        <div class="grid-row">
+            <div class="card card-blue">
+                <label for="weight">體重 (kg)</label>
+                <input type="number" id="weight" step="any" placeholder="輸入體重" oninput="calculate()">
+            </div>
+            <div class="card card-orange">
+                <span class="card-title">預打藥量<br><small style="font-size:11px; font-weight:normal;">(體重 × 0.14)</small></span>
+                <span class="val-text" id="predose">-</span>
+            </div>
